@@ -1,7 +1,6 @@
 package com.team.musicplayer.ui.song;
 
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -11,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.team.musicplayer.databinding.LayoutSongBinding;
 import com.team.musicplayer.model.entity.SongInfo;
+import com.team.musicplayer.ui.AdapterItemClickListener;
 
 public class SongAdapter extends PagedListAdapter<SongInfo, SongAdapter.SongViewHolder> {
 
@@ -25,6 +25,8 @@ public class SongAdapter extends PagedListAdapter<SongInfo, SongAdapter.SongView
             return oldItem.equals(newItem);
         }
     };
+
+    private AdapterItemClickListener adapterItemClickListener;
 
     SongAdapter() {
         super(DIFF_UTIL);
@@ -42,6 +44,14 @@ public class SongAdapter extends PagedListAdapter<SongInfo, SongAdapter.SongView
         holder.bind(getItem(position));
     }
 
+    public void setAdapterItemClickListener(AdapterItemClickListener adapterItemClickListener) {
+        this.adapterItemClickListener = adapterItemClickListener;
+    }
+
+    public SongInfo getItemAt(int position) {
+        return getItem(position);
+    }
+
     class SongViewHolder extends RecyclerView.ViewHolder {
 
         private LayoutSongBinding binding;
@@ -49,6 +59,9 @@ public class SongAdapter extends PagedListAdapter<SongInfo, SongAdapter.SongView
         public SongViewHolder(@NonNull LayoutSongBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
+            binding.getRoot().setOnClickListener(v -> {
+                if (adapterItemClickListener != null) adapterItemClickListener.onClick(getAdapterPosition());
+            });
         }
 
         void bind(SongInfo songInfo) {

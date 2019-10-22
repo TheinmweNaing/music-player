@@ -33,6 +33,6 @@ public class SongDataSource extends MediaStoreDataSource<SongInfo> {
 
     @Override
     protected String sortBy() {
-        return  MediaStore.Audio.Media.TITLE;
+        return MediaStore.Audio.Media.TITLE;
     }
 }

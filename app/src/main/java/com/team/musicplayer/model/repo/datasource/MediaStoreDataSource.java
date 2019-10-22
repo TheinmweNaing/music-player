@@ -41,7 +41,8 @@ public abstract class MediaStoreDataSource<T> extends PageKeyedDataSource<Intege
     private List<T> queryMedia(int offset) {
         List<T> list = new ArrayList<>();
         String pagination = sortBy() + " LIMIT 25 OFFSET " + offset;
-        Cursor cursor = MusicPlayerApplication.getApplication().getContentResolver().query(contentUri(), projection(), null, null, pagination);
+        String selection = contentUri().equals(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI) ? MediaStore.Audio.Media.IS_MUSIC + "!=0" : null;
+        Cursor cursor = MusicPlayerApplication.getApplication().getContentResolver().query(contentUri(), projection(), selection, null, pagination);
 
         if (cursor != null && cursor.moveToFirst()) {
             do {
