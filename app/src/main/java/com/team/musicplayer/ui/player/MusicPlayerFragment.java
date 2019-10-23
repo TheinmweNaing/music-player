@@ -1,10 +1,20 @@
 package com.team.musicplayer.ui.player;
 
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +25,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.team.musicplayer.R;
 import com.team.musicplayer.databinding.FragmentMusicPlayerBinding;
@@ -33,6 +44,46 @@ public class MusicPlayerFragment extends Fragment {
     private MediaPlayer player;
     private Runnable seekBarRunnable;
     private Handler seekBarHandler;
+    private Messenger messenger;
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            messenger = new Messenger(iBinder);
+            try {
+                long songId = getArguments() != null ? getArguments().getLong(KEY_SONG_ID) : 0;
+                Message msg1 = Message.obtain();
+                msg1.what = 100;
+                msg1.obj = songId;
+                messenger.send(msg1);
+
+                Message msg2 = Message.obtain();
+                msg2.what = 200;
+                messenger.send(msg2);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            messenger = null;
+        }
+    };
+
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (MusicPlayerService.ACTION_MUSIC_PLAYER_SERVICE.equals(intent.getAction())) {
+                if (intent.hasExtra(MusicPlayerService.KEY_DURATION)) {
+                    int duration = intent.getIntExtra(MusicPlayerService.KEY_DURATION, 0);
+                    binding.seekBar.setMax(duration / 1000);
+                    binding.tvEndMinute.setText(getMinutesAndSeconds(duration));
+                }
+                updateSeekBar(intent.getIntExtra(MusicPlayerService.KEY_CURRENT_POSITION, 0));
+            }
+        }
+    };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -58,7 +109,7 @@ public class MusicPlayerFragment extends Fragment {
                 binding.seekBar.setMax(duration / 1000);
                 binding.tvEndMinute.setText(getMinutesAndSeconds(duration));
 
-                updateSeekBar();
+                updateSeekBar(mediaPlayer.getDuration());
                 seekBarHandler = new Handler();
                 togglePlayMusic();
             });
@@ -78,11 +129,12 @@ public class MusicPlayerFragment extends Fragment {
         });
 
         int songPos = getArguments() != null ? getArguments().getInt(KEY_SONG_POSITION) : 0;
-        viewModel.setCurrentPosition(songPos);
+        //viewModel.setCurrentPosition(songPos);
 
         long songId = getArguments() != null ? getArguments().getLong(KEY_SONG_ID) : 0;
-        viewModel.findById(songId);
+        //viewModel.findById(songId);
 
+        startMusic();
     }
 
     @Nullable
@@ -98,7 +150,17 @@ public class MusicPlayerFragment extends Fragment {
         binding.tvTitle.setSelected(true);
 
         binding.btnPlay.setOnClickListener(v -> {
-            togglePlayMusic();
+            //togglePlayMusic();
+            //startMusic();
+            if (messenger != null) {
+                try {
+                    Message message = Message.obtain();
+                    message.what = 3;
+                    messenger.send(message);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
         });
 
         binding.btnNext.setOnClickListener(v -> viewModel.playNext());
@@ -124,6 +186,27 @@ public class MusicPlayerFragment extends Fragment {
         });
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(broadcastReceiver, new IntentFilter(MusicPlayerService.ACTION_MUSIC_PLAYER_SERVICE));
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (messenger != null) {
+            requireActivity().unbindService(serviceConnection);
+        }
+        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(broadcastReceiver);
+    }
+
+    private void startMusic() {
+        Intent i = new Intent();
+        i.setClass(requireContext(), MusicPlayerService.class);
+        requireActivity().bindService(i, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
     private void togglePlayMusic() {
         if (player == null) return;
 
@@ -131,7 +214,7 @@ public class MusicPlayerFragment extends Fragment {
             player.start();
             binding.btnPlay.setImageResource(R.drawable.ic_pause_black);
             seekBarRunnable = () -> {
-                updateSeekBar();
+                updateSeekBar(player.getCurrentPosition());
                 seekBarHandler.postDelayed(seekBarRunnable, 1000);
             };
             seekBarHandler.postDelayed(seekBarRunnable, 1000);
@@ -143,8 +226,8 @@ public class MusicPlayerFragment extends Fragment {
         }
     }
 
-    private void updateSeekBar() {
-        int current = player.getCurrentPosition();
+    private void updateSeekBar(int current) {
+        //int current = player.getCurrentPosition();
         binding.seekBar.setProgress(current / 1000);
         binding.tvStartMinute.setText(getMinutesAndSeconds(current));
     }
@@ -158,7 +241,7 @@ public class MusicPlayerFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (player.isPlaying()) {
+        if (player != null && player.isPlaying()) {
             seekBarHandler.removeCallbacks(seekBarRunnable);
             seekBarRunnable = null;
             player.stop();
