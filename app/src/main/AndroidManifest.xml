@@ -3,6 +3,7 @@
     package="com.team.musicplayer">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
         android:name=".MusicPlayerApplication"
@@ -20,6 +21,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.player.MusicPlayerActivity"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:parentActivityName=".MainActivity"/>
+
         <service android:name=".ui.player.MusicPlayerService" />
     </application>
 

@@ -1,3 +1,4 @@
+/*
 package com.team.musicplayer.ui.player;
 
 import android.content.BroadcastReceiver;
@@ -50,16 +51,22 @@ public class MusicPlayerFragment extends Fragment {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             messenger = new Messenger(iBinder);
+            long songId = getArguments() != null ? getArguments().getLong(KEY_SONG_ID) : 0;
             try {
-                long songId = getArguments() != null ? getArguments().getLong(KEY_SONG_ID) : 0;
-                Message msg1 = Message.obtain();
-                msg1.what = 100;
-                msg1.obj = songId;
-                messenger.send(msg1);
+                if (songId > 0) {
+                    Message msg1 = Message.obtain();
+                    msg1.what = 100;
+                    msg1.obj = songId;
+                    messenger.send(msg1);
 
-                Message msg2 = Message.obtain();
-                msg2.what = 200;
-                messenger.send(msg2);
+                    Message msg2 = Message.obtain();
+                    msg2.what = 200;
+                    messenger.send(msg2);
+                } else {
+                    Message msg3 = Message.obtain();
+                    msg3.what = 300;
+                    messenger.send(msg3);
+                }
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -74,13 +81,26 @@ public class MusicPlayerFragment extends Fragment {
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (MusicPlayerService.ACTION_MUSIC_PLAYER_SERVICE.equals(intent.getAction())) {
-                if (intent.hasExtra(MusicPlayerService.KEY_DURATION)) {
+            if (intent.getAction() == null) return;
+
+            switch (intent.getAction()) {
+                case MusicPlayerService.ACTION_MUSIC_DURATION:
                     int duration = intent.getIntExtra(MusicPlayerService.KEY_DURATION, 0);
                     binding.seekBar.setMax(duration / 1000);
                     binding.tvEndMinute.setText(getMinutesAndSeconds(duration));
-                }
-                updateSeekBar(intent.getIntExtra(MusicPlayerService.KEY_CURRENT_POSITION, 0));
+                    break;
+                case MusicPlayerService.ACTION_MUSIC_CURRENT_POSITION:
+                    updateSeekBar(intent.getIntExtra(MusicPlayerService.KEY_CURRENT_POSITION, 0));
+                    break;
+                case MusicPlayerService.ACTION_MUSIC_PLAYING:
+                    if (intent.getBooleanExtra(MusicPlayerService.KEY_MUSIC_PLAYING, false)) {
+                        binding.btnPlay.setImageResource(R.drawable.ic_pause_black);
+                    } else {
+                        binding.btnPlay.setImageResource(R.drawable.ic_play_arrow_black);
+                    }
+                    break;
+                default:
+                    break;
             }
         }
     };
@@ -189,7 +209,11 @@ public class MusicPlayerFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(broadcastReceiver, new IntentFilter(MusicPlayerService.ACTION_MUSIC_PLAYER_SERVICE));
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(MusicPlayerService.ACTION_MUSIC_PLAYING);
+        intentFilter.addAction(MusicPlayerService.ACTION_MUSIC_CURRENT_POSITION);
+        intentFilter.addAction(MusicPlayerService.ACTION_MUSIC_DURATION);
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(broadcastReceiver, intentFilter);
     }
 
     @Override
@@ -204,6 +228,7 @@ public class MusicPlayerFragment extends Fragment {
     private void startMusic() {
         Intent i = new Intent();
         i.setClass(requireContext(), MusicPlayerService.class);
+        requireActivity().startService(i);
         requireActivity().bindService(i, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
@@ -249,3 +274,4 @@ public class MusicPlayerFragment extends Fragment {
         }
     }
 }
+*/

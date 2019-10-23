@@ -8,6 +8,10 @@
         <variable
             name="obj"
             type="com.team.musicplayer.model.entity.Album" />
+
+        <variable
+            name="numberOfTrack"
+            type="String" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -89,6 +93,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
+            android:text="@{numberOfTrack}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="@+id/divider"

@@ -2,12 +2,17 @@ package com.team.musicplayer.model.entity;
 
 import java.util.Objects;
 
-public class Artist {
+public class Artist implements Identifiable {
 
     private long artistId;
     private String name;
     private int numberOfAlbums;
     private int numberOfSongs;
+
+    @Override
+    public Object getIdentity() {
+        return artistId;
+    }
 
     public long getArtistId() {
         return artistId;

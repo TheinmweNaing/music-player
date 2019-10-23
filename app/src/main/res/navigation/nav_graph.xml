@@ -9,10 +9,7 @@
         android:id="@+id/songsFragment"
         android:name="com.team.musicplayer.ui.song.SongsFragment"
         android:label="SongsFragment"
-        tools:layout="@layout/fragment_list" >
-        <action
-            android:id="@+id/action_songsFragment_to_musicPlayerFragment"
-            app:destination="@id/musicPlayerFragment" />
+        tools:layout="@layout/fragment_list">
     </fragment>
     <fragment
         android:id="@+id/albumsFragment"
@@ -25,8 +22,13 @@
         android:label="ArtistsFragment"
         tools:layout="@layout/fragment_list" />
     <fragment
-        android:id="@+id/musicPlayerFragment"
-        android:name="com.team.musicplayer.ui.player.MusicPlayerFragment"
-        android:label="MusicPlayerFragment"
-        tools:layout="@layout/fragment_music_player"/>
+        android:id="@+id/favouriteFragment"
+        android:name="com.team.musicplayer.ui.favourite.FavouritesFragment"
+        android:label="FavouritesFragment"
+        tools:layout="@layout/fragment_list" />
+    <fragment
+        android:id="@+id/playlistFragment"
+        android:name="com.team.musicplayer.ui.playlist.PlaylistFragment"
+        android:label="PlaylistFragment"
+        tools:layout="@layout/fragment_list" />
 </navigation>

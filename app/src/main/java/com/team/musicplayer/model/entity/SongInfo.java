@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo;
 
 import java.util.Objects;
 
-public class SongInfo {
+public class SongInfo implements Identifiable {
 
     @ColumnInfo(name = "song_id")
     private long songId;
@@ -12,6 +12,11 @@ public class SongInfo {
     private String artist;
     private String path;
     private long duration;
+
+    @Override
+    public Object getIdentity() {
+        return songId;
+    }
 
     public long getSongId() {
         return songId;

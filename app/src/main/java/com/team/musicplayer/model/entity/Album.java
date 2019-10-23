@@ -2,13 +2,18 @@ package com.team.musicplayer.model.entity;
 
 import java.util.Objects;
 
-public class Album {
+public class Album implements Identifiable {
 
     private long albumId;
     private String name;
     private String artist;
     private String image;
     private int numberOfSongs;
+
+    @Override
+    public Object getIdentity() {
+        return albumId;
+    }
 
     public long getAlbumId() {
         return albumId;
@@ -66,4 +71,5 @@ public class Album {
     public int hashCode() {
         return Objects.hash(albumId, name, artist, image, numberOfSongs);
     }
+
 }
