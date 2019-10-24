@@ -15,7 +15,9 @@ import android.os.RemoteException;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 
 import com.team.musicplayer.R;
 import com.team.musicplayer.databinding.ActivityMusicPlayerBinding;
@@ -30,6 +32,7 @@ public class MusicPlayerActivity extends AppCompatActivity {
 
     private Messenger messenger;
     private ActivityMusicPlayerBinding binding;
+    private MusicPlayerViewModel viewModel;
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -68,10 +71,14 @@ public class MusicPlayerActivity extends AppCompatActivity {
             if (intent.getAction() == null) return;
 
             switch (intent.getAction()) {
-                case MusicPlayerService.ACTION_MUSIC_DURATION:
+                case MusicPlayerService.ACTION_MUSIC_INFO:
                     int duration = intent.getIntExtra(MusicPlayerService.KEY_DURATION, 0);
+                    String title = intent.getStringExtra(MusicPlayerService.KEY_TITLE);
+                    String artist = intent.getStringExtra(MusicPlayerService.KEY_ARTIST);
                     binding.seekBar.setMax(duration / 1000);
                     binding.tvEndMinute.setText(getMinutesAndSeconds(duration));
+                    binding.tvTitle.setText(title);
+                    binding.tvArtist.setText(artist);
                     break;
                 case MusicPlayerService.ACTION_MUSIC_CURRENT_POSITION:
                     updateSeekBar(intent.getIntExtra(MusicPlayerService.KEY_CURRENT_POSITION, 0));
@@ -103,6 +110,9 @@ public class MusicPlayerActivity extends AppCompatActivity {
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        this.viewModel = ViewModelProviders.of(this).get(MusicPlayerViewModel.class);
+
+        binding.tvTitle.setSelected(true);
         binding.btnPlay.setOnClickListener(v -> {
             //togglePlayMusic();
             //startMusic();
@@ -117,6 +127,36 @@ public class MusicPlayerActivity extends AppCompatActivity {
             }
         });
 
+        binding.btnFavourite.setOnClickListener(v -> {
+            long songId = PreferenceManager.getDefaultSharedPreferences(this).getLong(MusicPlayerService.KEY_CURRENT_SONG_ID, 0);
+            viewModel.addFavourite(songId);
+        });
+
+        binding.btnAddPlaylist.setOnClickListener(v -> {
+            long songId = PreferenceManager.getDefaultSharedPreferences(this).getLong(MusicPlayerService.KEY_CURRENT_SONG_ID, 0);
+            viewModel.addPlayList(songId);
+        });
+
+        binding.btnPrevious.setOnClickListener(v -> {
+            try {
+                Message msg = Message.obtain();
+                msg.what = 2;
+                messenger.send(msg);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        });
+
+        binding.btnNext.setOnClickListener(v -> {
+            try {
+                Message msg = Message.obtain();
+                msg.what = 4;
+                messenger.send(msg);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        });
+
         startMusic();
     }
 
@@ -126,7 +166,7 @@ public class MusicPlayerActivity extends AppCompatActivity {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(MusicPlayerService.ACTION_MUSIC_PLAYING);
         intentFilter.addAction(MusicPlayerService.ACTION_MUSIC_CURRENT_POSITION);
-        intentFilter.addAction(MusicPlayerService.ACTION_MUSIC_DURATION);
+        intentFilter.addAction(MusicPlayerService.ACTION_MUSIC_INFO);
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, intentFilter);
     }
 

@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -21,14 +22,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 
 import com.team.musicplayer.R;
+import com.team.musicplayer.model.entity.SongInfo;
 import com.team.musicplayer.model.repo.MediaStoreRepo;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -37,14 +41,17 @@ import io.reactivex.schedulers.Schedulers;
 public class MusicPlayerService extends Service {
 
     public static final String ACTION_MUSIC_CURRENT_POSITION = "com.team.musicplayer.CurrentPosition";
-    public static final String ACTION_MUSIC_DURATION = "com.team.musicplayer.MusicDuration";
+    public static final String ACTION_MUSIC_INFO = "com.team.musicplayer.MusicInfo";
     public static final String ACTION_MUSIC_PLAYING = "com.team.musicplayer.MusicPlaying";
     public static final String ACTION_STOP_PLAYING = "com.team.musicplayer.StopPlaying";
 
     public static final String KEY_CURRENT_POSITION = "position";
     public static final String KEY_DURATION = "duration";
+    public static final String KEY_TITLE = "title";
+    public static final String KEY_ARTIST = "artist";
     public static final String KEY_CURRENT_SONG_POSITION = "song_position";
     public static final String KEY_MUSIC_PLAYING = "playing";
+    public static final String KEY_CURRENT_SONG_ID = "current_song_id";
 
     private final Messenger messenger = new Messenger(new PlayerHandler(this));
     private CompositeDisposable disposable = new CompositeDisposable();
@@ -53,6 +60,7 @@ public class MusicPlayerService extends Service {
     private MediaPlayer player;
     private List<Long> idList = new ArrayList<>();
     private int currentPosition;
+    private SongInfo currentSong;
     private boolean shuffle;
     private Runnable seekBarRunnable;
     private Handler seekBarHandler;
@@ -114,14 +122,21 @@ public class MusicPlayerService extends Service {
                 .subscribe(list -> {
                     idList.clear();
                     idList.addAll(list);
+                    if (currentSong != null) {
+                        currentPosition = list.indexOf(currentSong.getSongId());
+                    }
                 }));
     }
 
-    private void initMediaPlayer(long songId) {
+    private void startMediaPlayer(long songId) {
         disposable.add(repo.findById(songId).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(song -> {
                     if (player != null) player.release();
+
+                    SharedPreferences shp = PreferenceManager.getDefaultSharedPreferences(this);
+                    shp.edit().putLong(KEY_CURRENT_SONG_ID, song.getSongId()).apply();
+                    this.currentSong = song;
 
                     player = new MediaPlayer();
                     player.setAudioAttributes(new AudioAttributes.Builder()
@@ -129,7 +144,7 @@ public class MusicPlayerService extends Service {
                             .build());
 
                     player.setOnPreparedListener(mediaPlayer -> {
-                        sendDuration();
+                        sendInfo();
                         updateSeekBar();
                         seekBarHandler = new Handler();
                         togglePlayMusic();
@@ -192,23 +207,25 @@ public class MusicPlayerService extends Service {
                         service.shuffle = !service.shuffle;
                         break;
                     case 2:
+                        service.playPrev();
                         break;
                     case 3:
                         service.togglePlayMusic();
                         break;
                     case 4:
+                        service.playNext();
                         break;
                     case 5:
                         break;
                     case 100:
-                        service.initMediaPlayer((long) msg.obj);
+                        service.startMediaPlayer((long) msg.obj);
                         break;
                     case 200:
                         service.initSongs();
                         break;
                     case 300:
                         service.sendIsMusicPlaying();
-                        service.sendDuration();
+                        service.sendInfo();
                         break;
                 }
             }
@@ -222,10 +239,12 @@ public class MusicPlayerService extends Service {
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
-    private void sendDuration() {
+    private void sendInfo() {
         int duration = player.getDuration();
-        Intent intent = new Intent(ACTION_MUSIC_DURATION);
+        Intent intent = new Intent(ACTION_MUSIC_INFO);
         intent.putExtra(KEY_DURATION, duration);
+        intent.putExtra(KEY_TITLE, currentSong.getTitle());
+        intent.putExtra(KEY_ARTIST, currentSong.getArtist());
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
@@ -246,5 +265,26 @@ public class MusicPlayerService extends Service {
             player.stop();
             player.release();
         }
+    }
+
+    void playNext() {
+        if (shuffle) {
+            Random random = new Random();
+            currentPosition = random.nextInt(idList.size());
+        } else {
+            currentPosition += 1;
+        }
+
+        startMediaPlayer(idList.get(currentPosition));
+    }
+
+    void playPrev() {
+        if (shuffle) {
+            Random random = new Random();
+            currentPosition = random.nextInt(idList.size());
+        } else {
+            currentPosition -= 1;
+        }
+        startMediaPlayer(idList.get(currentPosition));
     }
 }

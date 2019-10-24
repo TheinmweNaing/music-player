@@ -16,6 +16,6 @@ public class PlaylistAdapter extends AbstractPagedListAdapter<Playlist> {
 
     @Override
     public void onBindViewHolder(@NonNull AbstractViewHolder<Playlist> holder, int position) {
-        holder.bindVariable(BR.obj, getItemAt(position));
+        holder.bindVariable(BR.obj, getItemAt(position).getSongInfo());
     }
 }
