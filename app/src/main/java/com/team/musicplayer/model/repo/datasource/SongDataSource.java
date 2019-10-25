@@ -35,4 +35,9 @@ public class SongDataSource extends MediaStoreDataSource<SongInfo> {
     protected String sortBy() {
         return MediaStore.Audio.Media.TITLE;
     }
+
+    @Override
+    protected String where() {
+        return null;
+    }
 }

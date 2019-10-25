@@ -102,6 +102,7 @@ public class MusicPlayerService extends Service {
                     .setContentTitle("Music Player")
                     .setContentIntent(pendingIntent)
                     .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", stopPendingIntent)
+                    .setStyle(new androidx.media.app.NotificationCompat.DecoratedMediaCustomViewStyle())
                     .build();
             startForeground(2201, notification);
         }

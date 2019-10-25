@@ -35,4 +35,9 @@ public class AlbumDataSource extends MediaStoreDataSource<Album> {
     protected String sortBy() {
         return  MediaStore.Audio.Albums.ALBUM;
     }
+
+    @Override
+    protected String where() {
+        return null;
+    }
 }

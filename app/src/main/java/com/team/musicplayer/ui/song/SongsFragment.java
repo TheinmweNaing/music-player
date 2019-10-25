@@ -15,7 +15,7 @@ import com.team.musicplayer.ui.player.MusicPlayerActivity;
 public class SongsFragment extends ListFragment {
 
     private SongAdapter adapter;
-    private SongsViewModel viewModel;
+    protected SongsViewModel viewModel;
 
     @Override
     protected RecyclerView.Adapter<? extends RecyclerView.ViewHolder> adapter() {
@@ -49,6 +49,10 @@ public class SongsFragment extends ListFragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        findSongs();
+    }
+
+    protected void findSongs() {
         new Handler().postDelayed(viewModel::findAll, 500);
     }
 }

@@ -14,6 +14,8 @@ import com.team.musicplayer.model.entity.SongInfo;
 import com.team.musicplayer.model.repo.datasource.AlbumDataSource;
 import com.team.musicplayer.model.repo.datasource.ArtistDataSource;
 import com.team.musicplayer.model.repo.datasource.MediaStoreDataSourceFactory;
+import com.team.musicplayer.model.repo.datasource.SongByAlbumDataSource;
+import com.team.musicplayer.model.repo.datasource.SongByArtistDataSource;
 import com.team.musicplayer.model.repo.datasource.SongDataSource;
 
 import java.util.ArrayList;
@@ -41,6 +43,16 @@ public class MediaStoreRepo {
 
     public Observable<PagedList<Artist>> getAllArtists() {
         MediaStoreDataSourceFactory<Artist> factory = new MediaStoreDataSourceFactory<>(ArtistDataSource.class);
+        return new RxPagedListBuilder<>(factory, config).buildObservable();
+    }
+
+    public Observable<PagedList<SongInfo>> getSongsByAlbum(long albumId) {
+        MediaStoreDataSourceFactory<SongInfo> factory = new MediaStoreDataSourceFactory<>(SongByAlbumDataSource.class, albumId);
+        return new RxPagedListBuilder<>(factory, config).buildObservable();
+    }
+
+    public Observable<PagedList<SongInfo>> getSongsByArtist(long artistId) {
+        MediaStoreDataSourceFactory<SongInfo> factory = new MediaStoreDataSourceFactory<>(SongByArtistDataSource.class, artistId);
         return new RxPagedListBuilder<>(factory, config).buildObservable();
     }
 

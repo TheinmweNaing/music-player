@@ -35,4 +35,9 @@ public class ArtistDataSource extends MediaStoreDataSource<Artist> {
     protected String sortBy() {
         return  MediaStore.Audio.Artists.ARTIST;
     }
+
+    @Override
+    protected String where() {
+        return null;
+    }
 }

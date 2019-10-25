@@ -7,14 +7,17 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.team.musicplayer.MainActivity;
 import com.team.musicplayer.R;
+import com.team.musicplayer.model.entity.Artist;
 import com.team.musicplayer.ui.ListFragment;
 import com.team.musicplayer.ui.album.AlbumAdapter;
 import com.team.musicplayer.ui.album.AlbumsViewModel;
+import com.team.musicplayer.ui.song.SongsByArtistFragment;
 
 public class ArtistsFragment extends ListFragment {
 
@@ -33,6 +36,14 @@ public class ArtistsFragment extends ListFragment {
         viewModel = ViewModelProviders.of(this).get(ArtistsViewModel.class);
         viewModel.artists.observe(this, list -> {
             adapter.submitList(list);
+        });
+
+        adapter.setAdapterItemClickListener(pos -> {
+            Artist artist = adapter.getItemAt(pos);
+            Bundle bundle = new Bundle();
+            bundle.putLong(SongsByArtistFragment.KEY_ARTIST_ID, artist.getArtistId());
+
+            Navigation.findNavController(getView()).navigate(R.id.action_artistsFragment_to_songsByArtistFragment, bundle);
         });
 
         MainActivity activity = (MainActivity) requireActivity();

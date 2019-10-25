@@ -32,6 +32,18 @@ public class SongsViewModel extends AndroidViewModel {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(songs::setValue));
     }
+    void findByAlbum(long albumId) {
+        disposable.add(repo.getSongsByAlbum(albumId)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(songs::setValue));
+    }
+    void findByArtist(long artistId) {
+        disposable.add(repo.getSongsByArtist(artistId)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(songs::setValue));
+    }
 
     @Override
     protected void onCleared() {
